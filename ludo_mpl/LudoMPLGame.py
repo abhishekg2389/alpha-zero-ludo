@@ -6,6 +6,7 @@ from Game import Game
 from .LudoMPLLogic import Board
 import numpy as np
 import random
+from collections import Counter
 
 
 class LudoMPLGame(Game):
@@ -14,7 +15,7 @@ class LudoMPLGame(Game):
         self._base_board = Board(2)
 
         dice_nums = [1, 2, 3, 4, 5, 6]
-        self.player1_dices = random.choices(dice_nums, k=24)
+        self.player1_dices = np.array(random.choices(dice_nums, k=24))
         self.player2_dices = np.copy(self.player1_dices)
         random.shuffle(self.player2_dices)
 
@@ -24,7 +25,7 @@ class LudoMPLGame(Game):
 
     def getInitBoard(self):
         b = Board(2)
-        return np.array(b.pieces)
+        return self._add_additional_params_to_board(b.convert_board_to_vector, 0)
 
     def getBoardSize(self):
         return (2, 65)
@@ -35,9 +36,24 @@ class LudoMPLGame(Game):
     def getNextState(self, board, player, action):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
+        self._set_board_from_bvf(board)
+        self._set_player_dices_from_board(board)
+        self._set_curr_throw_from_board(board)
         b = self._base_board.copy_board()
 
-        score = b.execute_action(action, player)
+        move = [-1, -1]
+        if player == 1:
+            move[0] = b.pieces[action]
+            move[1] = move[0] + self.player1_dices[self.curr_throw]
+        else:
+            move[0] = b.pieces[4 + action]
+            move[1] = move[0] + self.player2_dices[self.curr_throw]
+
+        score = b.execute_action(move, player)
+
+        '''
+        self._base_board = b
+
         if player == 1:
             self.player1_score += score
         elif player == -1:
@@ -45,8 +61,9 @@ class LudoMPLGame(Game):
 
         if player == -1:
             self.curr_throw += 1
+        '''
 
-        _board = self._add_future_dice_values_to_board(b.convert_board_to_vector, player)
+        _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
         return _board, -player
 
     def getValidMoves(self, board, player):
@@ -68,8 +85,24 @@ class LudoMPLGame(Game):
         # return 0 if not ended, 1 if player 1 won, -1 if player 1 lost
         # player = 1
         if (player == -1 and self.curr_throw == 25):
+            self._set_board_from_bvf(board)
+            board = self._base_board
+
+            player1_score = 0
+            player2_score = 0
+
+            for i in [0, 1, 2, 3]:
+                player1_score += (56 - board.pieces_away_from_home[i])
+                if board.pieces_away_from_home[i] == 0:
+                    player1_score += 56
+
+            for i in [4, 5, 6, 7]:
+                player2_score += (56 - board.pieces_away_from_home[i])
+                if board.pieces_away_from_home[i] == 0:
+                    player2_score += 56
+
             if self.player1_score == self.player2_score:
-                return 0.1
+                return 0.00001
             elif self.player1_score > self.player2_score:
                 return 1
             else:
@@ -78,16 +111,15 @@ class LudoMPLGame(Game):
             return 0
 
     def getCanonicalForm(self, board, player):
-        btv = board.convert_board_to_vector;
         if player == -1:
-            _btv            = np.copy(btv)
-            btv[0, :52]     = _btv[1, :52]
-            btv[0, 52:58]   = _btv[1, 58:64]
-            btv[0, 64]      = _btv[1, 64]
-            btv[1, :52]     = _btv[0, :52]
-            btv[1, 58:64]   = _btv[0, 52:58]
-            btv[1, 64]      = _btv[0, 64]
-        return btv
+            _board            = np.copy(board)
+            board[0, :52]     = _board[1, :52]
+            board[0, 52:58]   = _board[1, 58:64]
+            board[0, 64]      = _board[1, 64]
+            board[1, :52]     = _board[0, :52]
+            board[1, 58:64]   = _board[0, 52:58]
+            board[1, 64]      = _board[0, 64]
+        return board
 
     def getSymmetries(self, board, pi):
         return [(board, pi)]
@@ -99,14 +131,68 @@ class LudoMPLGame(Game):
         board_s = "".join(self._base_board.pieces_away_from_home)
         return board_s
 
-    def _add_future_dice_values_to_board(self, board, player):
-        if player == 1:
-            player1_dice_sum = self.player1_dices[self.curr_throw + 1].sum()
-            player2_dice_sum = self.player1_dices[self.curr_throw].sum()
+    def _set_board_from_bvf(self, bvf):
+        p, pafh = self._base_board.convert_vector_to_board(bvf)
+        self._base_board = Board(num_players=2, pieces=p, pieces_away_from_home=pafh)
+
+    def _set_curr_throw_from_board(self, bvf):
+        self.curr_throw = min(24 - bvf[0, 70], 24 - bvf[1, 70])
+
+    def _set_player_dices_from_board(self, bvf):
+        player1_dices = [0] * 24
+        player2_dices = [0] * 24
+
+        player1_dices_rem = []
+        for i in [64, 65, 66, 67, 68, 69]:
+            for j in range(bvf[0, i]):
+                player1_dices_rem.append(i - 63)
+
+        player2_dices_rem = []
+        for i in [64, 65, 66, 67, 68, 69]:
+            for j in range(bvf[1, i]):
+                player2_dices_rem.append(i - 63)
+
+        random.shuffle(player1_dices_rem)
+        random.shuffle(player2_dices_rem)
+
+        player1_dices[-len(player1_dices_rem):] = player1_dices_rem
+        player2_dices[-len(player2_dices_rem):] = player2_dices_rem
+
+        self.player1_dices = player1_dices
+        self.player2_dices = player2_dices
+
+    def _add_additional_params_to_board(self, board, player):
+        if player == 0:
+            player1_dice_counts = Counter(self.player1_dices)
+            player2_dice_counts = Counter(self.player2_dices)
+            player1_moves_left = 24
+            player2_moves_left = 24
+        elif player == 1:
+            player1_dice_counts = Counter(self.player1_dices[self.curr_throw + 1 : ])
+            player2_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
+            player1_moves_left = 23 - self.curr_throw
+            player2_moves_left = 24 - self.curr_throw
         else:
-            player1_dice_sum = self.player1_dices[self.curr_throw].sum()
-            player2_dice_sum = self.player1_dices[self.curr_throw].sum()
-        return np.append(board, [[player1_dice_sum], [player2_dice_sum]], 1)
+            player1_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
+            player2_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
+            player1_moves_left = 24 - self.curr_throw
+            player2_moves_left = 24 - self.curr_throw
+
+        addtnl_params = np.zeros((2, 7))
+
+        for i in [0, 1]:
+            for j in [1, 2, 3, 4, 5, 6]:
+                if i == 0:
+                    if j in player1_dice_counts:
+                        addtnl_params[i, j] = player1_dice_counts[j]
+                else:
+                    if j in player2_dice_counts:
+                        addtnl_params[i, j] = player2_dice_counts[j]
+
+        addtnl_params[0, 6] = player1_moves_left
+        addtnl_params[1, 6] = player2_moves_left
+
+        return np.append(board, [addtnl_params], 1)
 
     @staticmethod
     def display(board):

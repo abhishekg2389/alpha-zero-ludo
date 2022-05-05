@@ -52,7 +52,7 @@ from santorini.tensorflow.NNet import NNetWrapper as SantoriniTensorflowNNet
 
 from ludo_mpl.LudoMPLGame import LudoMPLGame
 from ludo_mpl.LudoMPLPlayers import *
-from ludo_mpl.keras.NNet import NNetWrapper as LudoMPLKerasNNet
+from ludo_mpl.keras_v2.NNet import NNetWrapper as LudoMPLKerasNNet
 
 import numpy as np
 from utils import *
@@ -67,8 +67,8 @@ class TestAllGames(unittest.TestCase):
         mcts = MCTS(game, neural_net(game), args)
         n1p = lambda x: np.argmax(mcts.getActionProb(x, temp=0))
 
-        arena = Arena.Arena(n1p, rp, game)
-        print(arena.playGames(2, verbose=False))
+        arena = Arena.Arena(n1p, rp, game, game.display)
+        print(arena.playGames(2, verbose=True))
 
     def test_ludompl_keras(self):
         self.execute_game_test(LudoMPLGame(), LudoMPLKerasNNet)

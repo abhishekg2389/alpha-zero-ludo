@@ -125,18 +125,18 @@ class Board():
         bv = np.zeros((2, 64))
 
         for i in [0, 1, 2, 3, 4, 5, 6, 7]:
-            if i % 4 == 0:
-                if self.pieces_away_from_home <= 5:
-                    bv[0, 57 - self.pieces_away_from_home] += 1
+            if i // 4 == 0:
+                if self.pieces_away_from_home[i] <= 5:
+                    bv[0, 57 - self.pieces_away_from_home[i]] += 1
                 else:
-                    bv[0, 56 - self.pieces_away_from_home] += 1
+                    bv[0, 56 - self.pieces_away_from_home[i]] += 1
             else:
-                if self.pieces_away_from_home <= 5:
-                    bv[1, 63 - self.pieces_away_from_home] += 1
-                elif self.pieces_away_from_home - 30 > 0:
-                    bv[1, self.pieces_away_from_home - 30] += 1
+                if self.pieces_away_from_home[i] <= 5:
+                    bv[1, 63 - self.pieces_away_from_home[i]] += 1
+                elif self.pieces_away_from_home[i] - 30 > 0:
+                    bv[1, self.pieces_away_from_home[i] - 30] += 1
                 else:
-                    bv[1, 30 - self.pieces_away_from_home] += 1
+                    bv[1, 30 - self.pieces_away_from_home[i]] += 1
 
         return bv
 
@@ -170,3 +170,5 @@ class Board():
 
         assert(-2 not in pieces)
         assert (-1 not in pieces_away_from_home)
+
+        return pieces, pieces_away_from_home
