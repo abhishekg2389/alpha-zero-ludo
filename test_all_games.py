@@ -21,6 +21,7 @@ import unittest
 import Arena
 from MCTS import MCTS
 
+'''
 from tictactoe.TicTacToeGame import TicTacToeGame
 from tictactoe.TicTacToePlayers import *
 from tictactoe.keras.NNet import NNetWrapper as TicTacToeKerasNNet
@@ -47,6 +48,12 @@ from gobang.tensorflow.NNet import NNetWrapper as GobangTensorflowNNet
 from santorini.SantoriniGame import SantoriniGame
 from santorini.SantoriniPlayers import *
 from santorini.tensorflow.NNet import NNetWrapper as SantoriniTensorflowNNet
+'''
+
+from ludo_mpl.LudoMPLGame import LudoMPLGame
+from ludo_mpl.LudoMPLPlayers import *
+from ludo_mpl.keras.NNet import NNetWrapper as LudoMPLKerasNNet
+
 import numpy as np
 from utils import *
 
@@ -63,6 +70,10 @@ class TestAllGames(unittest.TestCase):
         arena = Arena.Arena(n1p, rp, game)
         print(arena.playGames(2, verbose=False))
 
+    def test_ludompl_keras(self):
+        self.execute_game_test(LudoMPLGame(), LudoMPLKerasNNet)
+
+    '''
     def test_othello_pytorch(self):
         self.execute_game_test(OthelloGame(6), OthelloPytorchNNet)
 
@@ -86,6 +97,6 @@ class TestAllGames(unittest.TestCase):
 
     def test_santorini_tensorflow(self):
         self.execute_game_test(SantoriniGame(5), SantoriniTensorflowNNet)
-
+    '''
 if __name__ == '__main__':
     unittest.main()
