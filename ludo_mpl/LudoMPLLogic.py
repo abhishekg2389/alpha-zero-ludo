@@ -133,10 +133,8 @@ class Board():
             else:
                 if self.pieces_away_from_home[i] <= 5:
                     bv[1, 63 - self.pieces_away_from_home[i]] += 1
-                elif self.pieces_away_from_home[i] - 30 > 0:
-                    bv[1, self.pieces_away_from_home[i] - 30] += 1
                 else:
-                    bv[1, 30 - self.pieces_away_from_home[i]] += 1
+                    bv[1, (26 + 56 - self.pieces_away_from_home[i]) % 52] += 1
 
         return bv
 
@@ -148,11 +146,15 @@ class Board():
         pieces_away_from_home = [-1]*8
 
         marker_idx = 0
+
         for i in [0, 1]:
             for j in range(52):
                 while _bv[i, j] > 0:
                     pieces[marker_idx] = j
-                    pieces_away_from_home[marker_idx] = 56 - j
+                    if i == 0:
+                        pieces_away_from_home[marker_idx] = 56 - j
+                    else:
+                        pieces_away_from_home[marker_idx] = 56 - j + 26
                     marker_idx += 1
                     _bv[i, j] -= 1
             for j in range(52, 58):
@@ -167,8 +169,5 @@ class Board():
                     pieces_away_from_home[marker_idx] = 63 - j
                     marker_idx += 1
                     _bv[i, j] -= 1
-
-        assert(-2 not in pieces)
-        assert (-1 not in pieces_away_from_home)
 
         return pieces, pieces_away_from_home

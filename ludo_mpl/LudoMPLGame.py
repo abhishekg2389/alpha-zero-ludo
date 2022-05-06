@@ -14,6 +14,7 @@ class LudoMPLGame(Game):
         Game.__init__(self)
         self._base_board = Board(2)
 
+    def getInitBoard(self):
         dice_nums = [1, 2, 3, 4, 5, 6]
         self.player1_dices = np.array(random.choices(dice_nums, k=24))
         self.player2_dices = np.copy(self.player1_dices)
@@ -23,12 +24,11 @@ class LudoMPLGame(Game):
         self.player2_score = 0
         self.curr_throw = 0
 
-    def getInitBoard(self):
         b = Board(2)
         return self._add_additional_params_to_board(b.convert_board_to_vector, 0)
 
     def getBoardSize(self):
-        return (2, 65)
+        return (2, 71)
 
     def getActionSize(self):
         return 4
@@ -58,10 +58,9 @@ class LudoMPLGame(Game):
             self.player1_score += score
         elif player == -1:
             self.player2_score += score
-
+        '''
         if player == -1:
             self.curr_throw += 1
-        '''
 
         _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
         return _board, -player
@@ -84,7 +83,7 @@ class LudoMPLGame(Game):
     def getGameEnded(self, board, player):
         # return 0 if not ended, 1 if player 1 won, -1 if player 1 lost
         # player = 1
-        if (player == -1 and self.curr_throw == 25):
+        if board[0, 70] == 0 and board[1, 70] == 0:
             self._set_board_from_bvf(board)
             board = self._base_board
 
@@ -111,15 +110,17 @@ class LudoMPLGame(Game):
             return 0
 
     def getCanonicalForm(self, board, player):
+        _board = np.copy(board)
         if player == -1:
-            _board            = np.copy(board)
-            board[0, :52]     = _board[1, :52]
-            board[0, 52:58]   = _board[1, 58:64]
-            board[0, 64]      = _board[1, 64]
-            board[1, :52]     = _board[0, :52]
-            board[1, 58:64]   = _board[0, 52:58]
-            board[1, 64]      = _board[0, 64]
-        return board
+            _board[0, :26]       = board[1, 26:52]
+            _board[0, 26:52]     = board[1, :26]
+            _board[0, 52:58]     = board[1, 58:64]
+            _board[0, 64:]       = board[1, 64:]
+            _board[1, :26]       = board[0, 26:52]
+            _board[1, 26:52]     = board[0, :26]
+            _board[1, 58:64]     = board[0, 52:58]
+            _board[1, 64:]       = board[0, 64:]
+        return _board
 
     def getSymmetries(self, board, pi):
         return [(board, pi)]
@@ -136,7 +137,8 @@ class LudoMPLGame(Game):
         self._base_board = Board(num_players=2, pieces=p, pieces_away_from_home=pafh)
 
     def _set_curr_throw_from_board(self, bvf):
-        self.curr_throw = min(24 - bvf[0, 70], 24 - bvf[1, 70])
+        curr_throw = int(min(24 - bvf[0, 70], 24 - bvf[1, 70]))
+        self.curr_throw = curr_throw
 
     def _set_player_dices_from_board(self, bvf):
         player1_dices = [0] * 24
@@ -144,12 +146,12 @@ class LudoMPLGame(Game):
 
         player1_dices_rem = []
         for i in [64, 65, 66, 67, 68, 69]:
-            for j in range(bvf[0, i]):
+            for j in range(int(bvf[0, i])):
                 player1_dices_rem.append(i - 63)
 
         player2_dices_rem = []
         for i in [64, 65, 66, 67, 68, 69]:
-            for j in range(bvf[1, i]):
+            for j in range(int(bvf[1, i])):
                 player2_dices_rem.append(i - 63)
 
         random.shuffle(player1_dices_rem)
@@ -169,14 +171,14 @@ class LudoMPLGame(Game):
             player2_moves_left = 24
         elif player == 1:
             player1_dice_counts = Counter(self.player1_dices[self.curr_throw + 1 : ])
-            player2_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
-            player1_moves_left = 23 - self.curr_throw
-            player2_moves_left = 24 - self.curr_throw
+            player2_dice_counts = Counter(self.player2_dices[self.curr_throw : ])
+            player1_moves_left = sum([v for k, v in player1_dice_counts.items() if k != 0])
+            player2_moves_left = sum([v for k, v in player2_dice_counts.items() if k != 0])
         else:
             player1_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
-            player2_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
-            player1_moves_left = 24 - self.curr_throw
-            player2_moves_left = 24 - self.curr_throw
+            player2_dice_counts = Counter(self.player2_dices[self.curr_throw : ])
+            player1_moves_left = sum([v for k, v in player1_dice_counts.items() if k != 0])
+            player2_moves_left = sum([v for k, v in player2_dice_counts.items() if k != 0])
 
         addtnl_params = np.zeros((2, 7))
 
@@ -184,17 +186,23 @@ class LudoMPLGame(Game):
             for j in [1, 2, 3, 4, 5, 6]:
                 if i == 0:
                     if j in player1_dice_counts:
-                        addtnl_params[i, j] = player1_dice_counts[j]
+                        addtnl_params[i, j-1] = player1_dice_counts[j]
                 else:
                     if j in player2_dice_counts:
-                        addtnl_params[i, j] = player2_dice_counts[j]
+                        addtnl_params[i, j-1] = player2_dice_counts[j]
 
         addtnl_params[0, 6] = player1_moves_left
         addtnl_params[1, 6] = player2_moves_left
 
-        return np.append(board, [addtnl_params], 1)
+        _board = np.append(board, addtnl_params, 1)
+
+        if _board[0, -7:-1].sum() != _board[0, -1] or _board[1, -7:-1].sum() != _board[1, -1]:
+            return
+
+        return _board
 
     @staticmethod
     def display(board):
         print(board)
+        print(Board.convert_vector_to_board(board))
         print("-----------------------")
