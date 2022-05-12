@@ -33,14 +33,16 @@ class LudoMPLGame(Game):
     def getActionSize(self):
         return 4
 
-    def getNextState(self, board, player, action):
-        # if player takes action on board, return next (board,player)
-        # action must be a valid move
+    def setGameGivenBoard(self, board):
         self._set_board_from_bvf(board)
         self._set_player_dices_from_board(board)
         self._set_curr_throw_from_board(board)
-        b = self._base_board.copy_board()
 
+    def getMoveFromAction(self, board, player, action, boardSetAlready=False):
+        if not boardSetAlready:
+            self.setGameGivenBoard(board)
+
+        b = self._base_board.copy_board()
         move = [-1, -1]
         if player == 1:
             move[0] = b.pieces[action]
@@ -49,6 +51,14 @@ class LudoMPLGame(Game):
             move[0] = b.pieces[4 + action]
             move[1] = move[0] + self.player2_dices[self.curr_throw]
 
+        return move
+
+    def getNextState(self, board, player, action):
+        # if player takes action on board, return next (board,player)
+        # action must be a valid move
+        # self.setGameGivenBoard(board)
+        b = self._base_board.copy_board()
+        move = self.getMoveFromAction(board, player, action, boardSetAlready=True)
         score = b.execute_action(move, player)
 
         '''

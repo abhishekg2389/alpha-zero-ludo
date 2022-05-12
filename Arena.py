@@ -54,6 +54,11 @@ class Arena():
                 log.error(f'Action {action} is not valid!')
                 log.debug(f'valids = {valids}')
                 assert valids[action] > 0
+
+            if self.game.getMoveFromAction:
+                move = self.game.getMoveFromAction(board, curPlayer, action, boardSetAlready=False)
+                print(curPlayer, action, move[1] - move[0], move)
+
             board, curPlayer = self.game.getNextState(board, curPlayer, action)
         if verbose:
             print("Game over: Turn ", str(it), "Result ", str(self.game.getGameEnded(board, 1)))

@@ -61,7 +61,7 @@ class Board():
             for i in [0, 1, 2, 3]:
                 if self.pieces[i] == action_from_pos:
                     plyr_idx = i
-        else :
+        else:
             for i in [4, 5, 6, 7]:
                 if self.pieces[i] == action_from_pos:
                     plyr_idx = i
@@ -154,7 +154,10 @@ class Board():
                     if i == 0:
                         pieces_away_from_home[marker_idx] = 56 - j
                     else:
-                        pieces_away_from_home[marker_idx] = 56 - j + 26
+                        if j < 26:
+                            pieces_away_from_home[marker_idx] = 30 - j
+                        else:
+                            pieces_away_from_home[marker_idx] = 52 - j + 30
                     marker_idx += 1
                     _bv[i, j] -= 1
             for j in range(52, 58):
