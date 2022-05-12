@@ -74,7 +74,9 @@ class LudoMPLGame(Game):
         _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
         return _board, -player
 
-    def getValidMoves(self, board, player):
+    def getValidMoves(self, board, player, boardSetAlready=False):
+        if not boardSetAlready:
+            self.setGameGivenBoard(board)
         # return a fixed size binary vector
         valids = [0] * self.getActionSize()
 
@@ -163,6 +165,7 @@ class LudoMPLGame(Game):
             for j in range(int(bvf[1, i])):
                 player2_dices_rem.append(i - 63)
 
+        random.seed(0)
         random.shuffle(player1_dices_rem)
         random.shuffle(player2_dices_rem)
 
