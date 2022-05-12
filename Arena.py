@@ -57,9 +57,9 @@ class Arena():
 
             if self.game.getMoveFromAction:
                 move = self.game.getMoveFromAction(board, curPlayer, action, boardSetAlready=False)
-                print(curPlayer, action, move[1] - move[0], move)
+                print(curPlayer, action, move[2], move)
 
-            board, curPlayer = self.game.getNextState(board, curPlayer, action)
+            board, curPlayer = self.game.getNextState(board, curPlayer, action, boardSetAlready=True)
         if verbose:
             print("Game over: Turn ", str(it), "Result ", str(self.game.getGameEnded(board, 1)))
             self.display(board)

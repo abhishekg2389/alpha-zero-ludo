@@ -53,7 +53,10 @@ class Board():
         """
         assert(move[0] == player)
 
-        player_piece_idx = move[1]
+        if player == 1:
+            player_piece_idx = move[1]
+        else:
+            player_piece_idx = move[1] + 4
         steps_to_move = move[2]
 
         self.pieces_away_from_home[player_piece_idx] -= steps_to_move
@@ -84,10 +87,7 @@ class Board():
         if self.pieces[player_piece_idx] == -1:
             return -1
 
-        if player == 1:
-            player_piece_idx_pos = self.pieces[player_piece_idx]
-        else:
-            player_piece_idx_pos = self.pieces[4 + player_piece_idx]
+        player_piece_idx_pos = self.pieces[player_piece_idx]
 
         if player_piece_idx_pos in self.__safe_pos:
             return -1

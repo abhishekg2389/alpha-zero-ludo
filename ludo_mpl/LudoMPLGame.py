@@ -50,10 +50,12 @@ class LudoMPLGame(Game):
 
         return move
 
-    def getNextState(self, board, player, action):
+    def getNextState(self, board, player, action, boardSetAlready=False):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
         # self.setGameGivenBoard(board)
+        if not boardSetAlready:
+            self.setGameGivenBoard(board)
         b = self._base_board.copy_board()
         move = self.getMoveFromAction(board, player, action, boardSetAlready=True)
         score = b.execute_action(move, player)
@@ -133,7 +135,7 @@ class LudoMPLGame(Game):
         return [(board, pi)]
 
     def stringRepresentation(self, board):
-        return board.tostring()
+        return board.tobytes()
 
     def stringRepresentationReadable(self):
         board_s = "".join(self._base_board.pieces_away_from_home)
