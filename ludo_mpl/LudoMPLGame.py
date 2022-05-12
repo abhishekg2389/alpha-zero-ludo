@@ -43,13 +43,10 @@ class LudoMPLGame(Game):
             self.setGameGivenBoard(board)
 
         b = self._base_board.copy_board()
-        move = [-1, -1]
         if player == 1:
-            move[0] = b.pieces[action]
-            move[1] = move[0] + self.player1_dices[self.curr_throw]
+            move = (1, action, self.player1_dices[self.curr_throw])
         else:
-            move[0] = b.pieces[4 + action]
-            move[1] = move[0] + self.player2_dices[self.curr_throw]
+            move = (-1, action, self.player2_dices[self.curr_throw])
 
         return move
 

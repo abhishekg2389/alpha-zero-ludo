@@ -36,7 +36,7 @@ class Board():
             self.pieces_away_from_home = pieces_away_from_home
 
     # add [][] indexer syntax to the Board
-    def __getitem__(self, index): 
+    def __getitem__(self, index):
         return self.pieces[index]
 
     def copy_board(self):
@@ -47,35 +47,30 @@ class Board():
             pieces_away_from_home=np.copy(self.pieces_away_from_home)
         )
 
-    def execute_action(self, action, player):
+    def execute_action(self, move, player):
         """Perform the given move on the board; flips pieces as necessary.
         color gives the color pf the piece to play (1=white,-1=black)
         """
-        action_from_pos = action[0]
-        action_to_pos = action[1]
-        plyr_idx = None
+        assert(move[0] == player)
 
-        pos_diff = action_to_pos - action_from_pos
+        player_piece_idx = move[1]
+        steps_to_move = move[2]
 
+        self.pieces_away_from_home[player_piece_idx] -= steps_to_move
         if player == 1:
-            for i in [0, 1, 2, 3]:
-                if self.pieces[i] == action_from_pos:
-                    plyr_idx = i
+            if self.pieces_away_from_home[player_piece_idx] <= 5:
+                self.pieces[player_piece_idx] = -1
+            else:
+                self.pieces[player_piece_idx] += steps_to_move
         else:
-            for i in [4, 5, 6, 7]:
-                if self.pieces[i] == action_from_pos:
-                    plyr_idx = i
-            action_to_pos = action_to_pos % 52
+            if self.pieces_away_from_home[player_piece_idx] <= 5:
+                self.pieces[player_piece_idx] = -1
+            else:
+                self.pieces[player_piece_idx] += steps_to_move
+                self.pieces[player_piece_idx] = self.pieces[player_piece_idx] % 52
 
-        assert(plyr_idx is not None)
-        self.pieces[plyr_idx] = action_to_pos
-        self.pieces_away_from_home[plyr_idx] -= pos_diff
-        assert(self.pieces_away_from_home[plyr_idx] >= 0)
-
-        if self.pieces_away_from_home[plyr_idx] <= 5:
-            self.pieces[plyr_idx] = -1
-
-        piece_cut = self.check_piece_cut(action_to_pos, player)
+        assert(self.pieces_away_from_home[player_piece_idx] >= 0)
+        piece_cut = self.check_piece_cut(player_piece_idx, player)
         if piece_cut != -1:
             if piece_cut >= 4:
                 self.pieces[piece_cut] = 26
@@ -85,30 +80,40 @@ class Board():
 
         return 56 * (self.pieces_away_from_home[plyr_idx] == 0) + 2 * (piece_cut != -1) + pos_diff
 
-    def check_piece_cut(self, action_to_pos, color):
-        if action_to_pos in self.__safe_pos:
+    def check_piece_cut(self, player_piece_idx, player):
+        if self.pieces[player_piece_idx] == -1:
             return -1
 
-        if color == 1:
-            if self._count_pieces_on_pos(action_to_pos) > 2:
-                return -1
-            elif self._count_pieces_on_pos(action_to_pos) == 2:
+        if player == 1:
+            player_piece_idx_pos = self.pieces[player_piece_idx]
+        else:
+            player_piece_idx_pos = self.pieces[4 + player_piece_idx]
+
+        if player_piece_idx_pos in self.__safe_pos:
+            return -1
+
+        player_piece_idx_pos_count = 0
+        for i in [0, 1, 2, 3, 4, 5, 6, 7]:
+            if self.pieces[i] == player_piece_idx_pos:
+                player_piece_idx_pos_count += 1
+
+        if player_piece_idx_pos_count > 2:
+            return -1
+        elif player_piece_idx_pos_count == 1:
+            return -1
+        elif player_piece_idx_pos_count == 0:
+            assert False
+        else:
+            other_player_piece_idx = -1
+            if player == 1:
                 for i in [4, 5, 6, 7]:
-                    if self.pieces[i] == action_to_pos:
+                    if self.pieces[i] == player_piece_idx_pos:
                         return i
-                return -1
             else:
-                return -1
-        elif color == -1:
-            if self._count_pieces_on_pos(action_to_pos) > 2:
-                return -1
-            elif self._count_pieces_on_pos(action_to_pos) == 2:
                 for i in [0, 1, 2, 3]:
-                    if self.pieces[i] == action_to_pos:
+                    if self.pieces[i] == player_piece_idx_pos:
                         return i
-                return -1
-            else:
-                return -1
+        return -1
 
     def is_legal_move(self, plyr_idx, num_pos_to_move):
         return self.pieces_away_from_home[plyr_idx] >= num_pos_to_move
