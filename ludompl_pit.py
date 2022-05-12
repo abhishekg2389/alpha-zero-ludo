@@ -41,6 +41,6 @@ hp2 = HumanPlayer(g).play
 
 #    player2 = n2p  # Player 2 is neural network if it's cpu vs cpu.
 
-arena = Arena.Arena(hp1, hp2, g, display=LudoMPLGame.display)
+arena = Arena.Arena(hp1, rp, g, display=LudoMPLGame.display)
 
 print(arena.playGames(2, verbose=True))

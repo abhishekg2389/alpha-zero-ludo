@@ -119,9 +119,9 @@ class LudoMPLGame(Game):
                 if board.pieces_away_from_home[i] == 0:
                     player2_score += 56
 
-            if self.player1_score == self.player2_score:
+            if player1_score == player2_score:
                 return 0.00001
-            elif self.player1_score > self.player2_score:
+            elif player1_score > player2_score:
                 return 1
             else:
                 return -1
