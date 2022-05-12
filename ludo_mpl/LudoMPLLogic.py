@@ -168,7 +168,7 @@ class Board():
                     pieces_away_from_home[marker_idx] = 57 - j
                     marker_idx += 1
                     _bv[i, j] -= 1
-            for j in range(59, 64):
+            for j in range(58, 64):
                 while _bv[i, j] > 0:
                     pieces[marker_idx] = -1
                     pieces_away_from_home[marker_idx] = 63 - j
