@@ -78,7 +78,7 @@ class Board():
                 self.pieces[piece_cut] = 0
             self.pieces_away_from_home[piece_cut] = self.__board_size
 
-        return 56 * (self.pieces_away_from_home[plyr_idx] == 0) + 2 * (piece_cut != -1) + pos_diff
+        return 56 * (self.pieces_away_from_home[player_piece_idx] == 0) + 2 * (piece_cut != -1) + steps_to_move
 
     def check_piece_cut(self, player_piece_idx, player):
         if self.pieces[player_piece_idx] == -1:
