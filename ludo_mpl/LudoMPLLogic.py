@@ -115,9 +115,6 @@ class Board():
                         return i
         return -1
 
-    def is_legal_move(self, plyr_idx, num_pos_to_move):
-        return self.pieces_away_from_home[plyr_idx] >= num_pos_to_move
-
     def _count_pieces_on_pos(self, pos):
         pieces_count = 0
         for i in [0, 1, 2, 3, 4, 5, 6, 7]:

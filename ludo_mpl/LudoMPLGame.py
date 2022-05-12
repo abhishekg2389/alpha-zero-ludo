@@ -74,20 +74,28 @@ class LudoMPLGame(Game):
         _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
         return _board, -player
 
-    def getValidMoves(self, board, player, boardSetAlready=False):
+    def getValidMoves(self, board, player, boardSetAlready=False, debug=False):
         if not boardSetAlready:
             self.setGameGivenBoard(board)
         # return a fixed size binary vector
         valids = [0] * self.getActionSize()
 
+        if player == 1 and list(self.player1_dices).count(0) < list(self.player2_dices).count(0):
+            self._set_player_dices_from_board(board, isCanonicalBoard=True)
+            player = -1
+
         if player == 1:
+            if debug:
+                print(self.player1_dices)
             num_pos_to_move = self.player1_dices[self.curr_throw]
             for i in [0, 1, 2, 3]:
-                valids[i] = self._base_board.is_legal_move(i, num_pos_to_move)
+                valids[i] = self._base_board.pieces_away_from_home[i] >= num_pos_to_move
         elif player == -1:
+            if debug:
+                print(self.player2_dices)
             num_pos_to_move = self.player2_dices[self.curr_throw]
             for i in [0, 1, 2, 3]:
-                valids[i] = self._base_board.is_legal_move(4 + i, num_pos_to_move)
+                valids[i] = self._base_board.pieces_away_from_home[i] >= num_pos_to_move
 
         return np.array(valids)
 
@@ -151,7 +159,7 @@ class LudoMPLGame(Game):
         curr_throw = int(min(24 - bvf[0, 70], 24 - bvf[1, 70]))
         self.curr_throw = curr_throw
 
-    def _set_player_dices_from_board(self, bvf):
+    def _set_player_dices_from_board(self, bvf, isCanonicalBoard=False):
         player1_dices = [0] * 24
         player2_dices = [0] * 24
 
@@ -164,6 +172,11 @@ class LudoMPLGame(Game):
         for i in [64, 65, 66, 67, 68, 69]:
             for j in range(int(bvf[1, i])):
                 player2_dices_rem.append(i - 63)
+
+        if isCanonicalBoard:
+            _x = np.copy(player1_dices_rem)
+            player1_dices_rem = np.copy(player2_dices_rem)
+            player2_dices_rem = _x
 
         random.seed(0)
         random.shuffle(player1_dices_rem)

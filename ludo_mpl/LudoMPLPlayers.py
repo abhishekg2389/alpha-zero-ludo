@@ -20,7 +20,7 @@ class HumanPlayer():
     def play(self, board):
         # display(board)
         a = np.random.randint(self.game.getActionSize())
-        valids = self.game.getValidMoves(board, 1)
+        valids = self.game.getValidMoves(board, 1, debug=True)
         print(valids)
         while True:
             input_move = int(input())
