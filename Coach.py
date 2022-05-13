@@ -2,6 +2,8 @@ import logging
 import os
 import sys
 from collections import deque
+import multiprocessing
+from itertools import repeat
 from pickle import Pickler, Unpickler
 from random import shuffle
 
@@ -82,6 +84,18 @@ class Coach():
             log.info(f'Starting Iter #{i} ...')
             # examples of the iteration
             if not self.skipFirstSelfPlay or i > 1:
+                pool = multiprocessing.Pool(processes=4)
+
+                outputs = pool.starmap(
+                    _executeEpisode, zip(
+                        [1, 2, 3, 4, 5],
+                        repeat(self.game),
+                        repeat(self.mcts),
+                        repeat(1),
+                        repeat(self.args.tempThreshold)
+                    )
+                )
+
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
 
                 for _ in tqdm(range(self.args.numEps), desc="Self Play"):
@@ -155,3 +169,26 @@ class Coach():
 
             # examples based on the model were already collected (loaded)
             self.skipFirstSelfPlay = True
+
+def _executeEpisode(episode, game, mcts, curPlayer, tempThreshold):
+    board = game.getInitBoard()
+    trainExamples = []
+    episodeStep = 0
+
+    while True:
+        episodeStep += 1
+        canonicalBoard = game.getCanonicalForm(board, curPlayer)
+        temp = int(episodeStep < tempThreshold)
+
+        pi = mcts.getActionProb(canonicalBoard, temp=temp)
+        sym = game.getSymmetries(canonicalBoard, pi)
+        for b, p in sym:
+            trainExamples.append([b, curPlayer, p, None])
+
+        action = np.random.choice(len(pi), p=pi)
+        board, curPlayer = game.getNextState(board, curPlayer, action)
+
+        r = game.getGameEnded(board, curPlayer)
+
+        if r != 0:
+            return [(x[0], x[2], r * ((-1) ** (x[1] != curPlayer))) for x in trainExamples]
