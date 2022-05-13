@@ -1,12 +1,12 @@
 from __future__ import print_function
+
 import sys
 
 sys.path.append('..')
 from Game import Game
-from .LudoMPLLogic import Board
+from .LudoMPLLogic import *
 import numpy as np
 import random
-from collections import Counter
 
 
 class LudoMPLGame(Game):
@@ -25,7 +25,10 @@ class LudoMPLGame(Game):
         self.curr_throw = 0
 
         b = Board(2)
-        return self._add_additional_params_to_board(b.convert_board_to_vector, 0)
+        return _add_additional_params_to_board(
+            convert_board_to_vector(b.pieces_away_from_home),
+            self.curr_throw, self.player1_dices, self.player2_dices, 0
+        )
 
     def getBoardSize(self):
         return (2, 71)
@@ -35,7 +38,13 @@ class LudoMPLGame(Game):
 
     def setGameGivenBoard(self, board):
         self._set_board_from_bvf(board)
-        self._set_player_dices_from_board(board)
+
+        player1_dices = np.zeros(24, dtype=np.int8)
+        player2_dices = np.zeros(24, dtype=np.int8)
+        _set_player_dices_from_board(player1_dices, player2_dices, board)
+        self.player1_dices = player1_dices
+        self.player2_dices = player2_dices
+
         self._set_curr_throw_from_board(board)
 
     def getMoveFromAction(self, board, player, action, boardSetAlready=False):
@@ -51,14 +60,11 @@ class LudoMPLGame(Game):
         return move
 
     def getNextState(self, board, player, action, boardSetAlready=False):
-        # if player takes action on board, return next (board,player)
-        # action must be a valid move
-        # self.setGameGivenBoard(board)
         if not boardSetAlready:
             self.setGameGivenBoard(board)
         b = self._base_board.copy_board()
         move = self.getMoveFromAction(board, player, action, boardSetAlready=True)
-        score = b.execute_action(move, player)
+        score = execute_action(b.pieces, b.pieces_away_from_home, move, player)
 
         '''
         self._base_board = b
@@ -71,7 +77,10 @@ class LudoMPLGame(Game):
         if player == -1:
             self.curr_throw += 1
 
-        _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
+        _board = _add_additional_params_to_board(
+            convert_board_to_vector(b.pieces_away_from_home),
+            self.curr_throw, self.player1_dices, self.player2_dices, player
+        )
         return _board, -player
 
     def getValidMoves(self, board, player, boardSetAlready=False, debug=False):
@@ -81,7 +90,7 @@ class LudoMPLGame(Game):
         valids = [0] * self.getActionSize()
 
         if player == 1 and list(self.player1_dices).count(0) < list(self.player2_dices).count(0):
-            self._set_player_dices_from_board(board, isCanonicalBoard=True)
+            _set_player_dices_from_board(self.player1_dices, self.player2_dices, board, isCanonicalBoard=True)
             player = -1
 
         if player == 1:
@@ -131,14 +140,14 @@ class LudoMPLGame(Game):
     def getCanonicalForm(self, board, player):
         _board = np.copy(board)
         if player == -1:
-            _board[0, :26]       = board[1, 26:52]
-            _board[0, 26:52]     = board[1, :26]
-            _board[0, 52:58]     = board[1, 58:64]
-            _board[0, 64:]       = board[1, 64:]
-            _board[1, :26]       = board[0, 26:52]
-            _board[1, 26:52]     = board[0, :26]
-            _board[1, 58:64]     = board[0, 52:58]
-            _board[1, 64:]       = board[0, 64:]
+            _board[0, :26] = board[1, 26:52]
+            _board[0, 26:52] = board[1, :26]
+            _board[0, 52:58] = board[1, 58:64]
+            _board[0, 64:] = board[1, 64:]
+            _board[1, :26] = board[0, 26:52]
+            _board[1, 26:52] = board[0, :26]
+            _board[1, 58:64] = board[0, 52:58]
+            _board[1, 64:] = board[0, 64:]
         return _board
 
     def getSymmetries(self, board, pi):
@@ -152,82 +161,103 @@ class LudoMPLGame(Game):
         return board_s
 
     def _set_board_from_bvf(self, bvf):
-        p, pafh = self._base_board.convert_vector_to_board(bvf)
+        p, pafh = convert_vector_to_board(bvf)
         self._base_board = Board(num_players=2, pieces=p, pieces_away_from_home=pafh)
 
     def _set_curr_throw_from_board(self, bvf):
         curr_throw = int(min(24 - bvf[0, 70], 24 - bvf[1, 70]))
         self.curr_throw = curr_throw
 
-    def _set_player_dices_from_board(self, bvf, isCanonicalBoard=False):
-        player1_dices = [0] * 24
-        player2_dices = [0] * 24
-
-        player1_dices_rem = []
-        for i in [64, 65, 66, 67, 68, 69]:
-            for j in range(int(bvf[0, i])):
-                player1_dices_rem.append(i - 63)
-
-        player2_dices_rem = []
-        for i in [64, 65, 66, 67, 68, 69]:
-            for j in range(int(bvf[1, i])):
-                player2_dices_rem.append(i - 63)
-
-        if isCanonicalBoard:
-            _x = np.copy(player1_dices_rem)
-            player1_dices_rem = np.copy(player2_dices_rem)
-            player2_dices_rem = _x
-
-        random.seed(0)
-        random.shuffle(player1_dices_rem)
-        random.shuffle(player2_dices_rem)
-
-        player1_dices[-len(player1_dices_rem):] = player1_dices_rem
-        player2_dices[-len(player2_dices_rem):] = player2_dices_rem
-
-        self.player1_dices = player1_dices
-        self.player2_dices = player2_dices
-
-    def _add_additional_params_to_board(self, board, player):
-        if player == 0:
-            player1_dice_counts = Counter(self.player1_dices)
-            player2_dice_counts = Counter(self.player2_dices)
-            player1_moves_left = 24
-            player2_moves_left = 24
-        elif player == 1:
-            player1_dice_counts = Counter(self.player1_dices[self.curr_throw + 1 : ])
-            player2_dice_counts = Counter(self.player2_dices[self.curr_throw : ])
-            player1_moves_left = sum([v for k, v in player1_dice_counts.items() if k != 0])
-            player2_moves_left = sum([v for k, v in player2_dice_counts.items() if k != 0])
-        else:
-            player1_dice_counts = Counter(self.player1_dices[self.curr_throw : ])
-            player2_dice_counts = Counter(self.player2_dices[self.curr_throw : ])
-            player1_moves_left = sum([v for k, v in player1_dice_counts.items() if k != 0])
-            player2_moves_left = sum([v for k, v in player2_dice_counts.items() if k != 0])
-
-        addtnl_params = np.zeros((2, 7))
-
-        for i in [0, 1]:
-            for j in [1, 2, 3, 4, 5, 6]:
-                if i == 0:
-                    if j in player1_dice_counts:
-                        addtnl_params[i, j-1] = player1_dice_counts[j]
-                else:
-                    if j in player2_dice_counts:
-                        addtnl_params[i, j-1] = player2_dice_counts[j]
-
-        addtnl_params[0, 6] = player1_moves_left
-        addtnl_params[1, 6] = player2_moves_left
-
-        _board = np.append(board, addtnl_params, 1)
-
-        if _board[0, -7:-1].sum() != _board[0, -1] or _board[1, -7:-1].sum() != _board[1, -1]:
-            return
-
-        return _board
-
     @staticmethod
     def display(board):
         print(board)
-        print(Board.convert_vector_to_board(board))
+        print(convert_vector_to_board(board))
         print("-----------------------")
+
+@jit(nopython=True)
+def _set_player_dices_from_board(player1_dices, player2_dices, bvf, isCanonicalBoard=False):
+    player1_dices_rem = np.zeros(int(bvf[0, 64:70].sum()), dtype=np.int8)
+    counter = 0
+    for i in [64, 65, 66, 67, 68, 69]:
+        for j in range(int(bvf[0, i])):
+            player1_dices_rem[counter] = i - 63
+            counter += 1
+
+    player2_dices_rem = np.zeros(int(bvf[1, 64:70].sum()), dtype=np.int8)
+    counter = 0
+    for i in [64, 65, 66, 67, 68, 69]:
+        for j in range(int(bvf[1, i])):
+            player2_dices_rem[counter] = i - 63
+            counter += 1
+
+    if isCanonicalBoard:
+        _x = player1_dices_rem
+        player1_dices_rem = player2_dices_rem
+        player2_dices_rem = _x
+
+    np.random.seed(0)
+    np.random.shuffle(player1_dices_rem)
+    np.random.shuffle(player2_dices_rem)
+
+    if len(player1_dices_rem) != 0:
+        player1_dices[-len(player1_dices_rem):] = player1_dices_rem
+    if len(player2_dices_rem) != 0:
+        player2_dices[-len(player2_dices_rem):] = player2_dices_rem
+
+#@jit(nopython=True)
+def _add_additional_params_to_board(board, curr_throw, player1_dices, player2_dices, player):
+    player1_dice_counts = [0, 0, 0, 0, 0, 0]
+    player2_dice_counts = [0, 0, 0, 0, 0, 0]
+
+    player1_moves_left = 0
+    player2_moves_left = 0
+
+    if player == 0:
+        for i in range(len(player1_dices)):
+            player1_dice_counts[player1_dices[i] - 1] += 1
+            player2_dice_counts[player2_dices[i] - 1] += 1
+
+        player1_moves_left = 24
+        player2_moves_left = 24
+    elif player == 1:
+        for i in range(curr_throw + 1, len(player1_dices)):
+            if player1_dices[i] == 0:
+                continue
+            player1_dice_counts[player1_dices[i] - 1] += 1
+            player1_moves_left += 1
+        for i in range(curr_throw, len(player2_dices)):
+            if player2_dices[i] == 0:
+                continue
+            player2_dice_counts[player2_dices[i] - 1] += 1
+            player2_moves_left += 1
+    else:
+        for i in range(curr_throw, len(player1_dices)):
+            if player1_dices[i] == 0:
+                continue
+            player1_dice_counts[player1_dices[i] - 1] += 1
+            player1_moves_left += 1
+
+        for i in range(curr_throw, len(player2_dices)):
+            if player2_dices[i] == 0:
+                continue
+            player2_dice_counts[player2_dices[i] - 1] += 1
+            player2_moves_left += 1
+
+    addtnl_params = np.zeros((2, 7))
+
+    for i in [0, 1]:
+        for j in [1, 2, 3, 4, 5, 6]:
+            if i == 0:
+                addtnl_params[i, j - 1] = player1_dice_counts[j - 1]
+            else:
+                addtnl_params[i, j - 1] = player2_dice_counts[j - 1]
+
+    addtnl_params[0, 6] = player1_moves_left
+    addtnl_params[1, 6] = player2_moves_left
+
+    _board = np.append(board, addtnl_params, 1)
+
+    if _board[0, -7:-1].sum() != _board[0, -1] or _board[1, -7:-1].sum() != _board[1, -1]:
+        assert (False)
+
+    return _board
