@@ -77,7 +77,7 @@ class LudoMPLGame(Game):
         _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
         return _board, -player
 
-    def getValidMoves(self, board, player, debug=True):
+    def getValidMoves(self, board, player, debug=False):
         self.setGameGivenBoard(board)
 
         assert player == 1
