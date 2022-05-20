@@ -25,7 +25,7 @@ class Arena():
         self.player1 = player1
         self.player2 = player2
         self.game = game
-        self.display = display
+        self.display = game.display if game.display is not None else display
 
     def playGame(self, verbose=False):
         """
@@ -56,10 +56,11 @@ class Arena():
                 assert valids[action] > 0
 
             if self.game.getMoveFromAction and verbose:
-                move = self.game.getMoveFromAction(board, curPlayer, action, boardSetAlready=False)
-                print(curPlayer, action, move[2], move)
+                print("action --- ", action)
+                move = self.game.getMoveFromAction(board, curPlayer, action)
+                print("move   --- ", move)
 
-            board, curPlayer = self.game.getNextState(board, curPlayer, action, boardSetAlready=True)
+            board, curPlayer = self.game.getNextState(board, curPlayer, action)
         if verbose:
             print("Game over: Turn ", str(it), "Result ", str(self.game.getGameEnded(board, 1)))
             self.display(board)

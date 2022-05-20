@@ -38,26 +38,29 @@ class LudoMPLGame(Game):
         self._set_player_dices_from_board(board)
         self._set_curr_throw_from_board(board)
 
-    def getMoveFromAction(self, board, player, action, boardSetAlready=False):
-        if not boardSetAlready:
-            self.setGameGivenBoard(board)
+    def getMoveFromAction(self, board, player, action):
+        isCanonicalBoard = player == 1 and list(self.player1_dices).count(0) < list(self.player2_dices).count(0)
+        player1_dices, player2_dices = self._set_player_dices_from_board(board, isCanonicalBoard=isCanonicalBoard, onlyGet=True)
 
-        b = self._base_board.copy_board()
-        if player == 1:
-            move = (1, action, self.player1_dices[self.curr_throw])
+        if not isCanonicalBoard:
+            if player == 1:
+                num_pos_to_move = player1_dices[self.curr_throw]
+            elif player == -1:
+                num_pos_to_move = player2_dices[self.curr_throw]
         else:
-            move = (-1, action, self.player2_dices[self.curr_throw])
+            num_pos_to_move = player1_dices[self.curr_throw]
 
-        return move
+        return (player, action, num_pos_to_move)
 
-    def getNextState(self, board, player, action, boardSetAlready=False):
+    def getNextState(self, board, player, action):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
-        # self.setGameGivenBoard(board)
-        if not boardSetAlready:
-            self.setGameGivenBoard(board)
+
+        self.setGameGivenBoard(board)
+
         b = self._base_board.copy_board()
-        move = self.getMoveFromAction(board, player, action, boardSetAlready=True)
+
+        move = self.getMoveFromAction(board, player, action)
         score = b.execute_action(move, player)
 
         '''
@@ -74,28 +77,28 @@ class LudoMPLGame(Game):
         _board = self._add_additional_params_to_board(b.convert_board_to_vector, player)
         return _board, -player
 
-    def getValidMoves(self, board, player, boardSetAlready=False, debug=False):
-        if not boardSetAlready:
-            self.setGameGivenBoard(board)
+    def getValidMoves(self, board, player, debug=True):
+        self.setGameGivenBoard(board)
+
+        assert player == 1
+
         # return a fixed size binary vector
         valids = [0] * self.getActionSize()
 
-        if player == 1 and list(self.player1_dices).count(0) < list(self.player2_dices).count(0):
-            self._set_player_dices_from_board(board, isCanonicalBoard=True)
-            player = -1
+        isCanonicalBoard = player == 1 and list(self.player1_dices).count(0) < list(self.player2_dices).count(0)
+        player1_dices, player2_dices = self._set_player_dices_from_board(board, isCanonicalBoard=isCanonicalBoard, onlyGet=True)
 
-        if player == 1:
+        if isCanonicalBoard:
             if debug:
-                print(self.player1_dices)
-            num_pos_to_move = self.player1_dices[self.curr_throw]
-            for i in [0, 1, 2, 3]:
-                valids[i] = self._base_board.pieces_away_from_home[i] >= num_pos_to_move
-        elif player == -1:
+                print(player2_dices)
+            num_pos_to_move = player2_dices[self.curr_throw]
+        else:
             if debug:
-                print(self.player2_dices)
-            num_pos_to_move = self.player2_dices[self.curr_throw]
-            for i in [0, 1, 2, 3]:
-                valids[i] = self._base_board.pieces_away_from_home[i] >= num_pos_to_move
+                print(player1_dices)
+            num_pos_to_move = player1_dices[self.curr_throw]
+
+        for i in [0, 1, 2, 3]:
+            valids[i] = self._base_board.pieces_away_from_home[i] >= num_pos_to_move
 
         return np.array(valids)
 
@@ -159,7 +162,7 @@ class LudoMPLGame(Game):
         curr_throw = int(min(24 - bvf[0, 70], 24 - bvf[1, 70]))
         self.curr_throw = curr_throw
 
-    def _set_player_dices_from_board(self, bvf, isCanonicalBoard=False):
+    def _set_player_dices_from_board(self, bvf, isCanonicalBoard=False, onlyGet=False):
         player1_dices = [0] * 24
         player2_dices = [0] * 24
 
@@ -185,8 +188,11 @@ class LudoMPLGame(Game):
         player1_dices[-len(player1_dices_rem):] = player1_dices_rem
         player2_dices[-len(player2_dices_rem):] = player2_dices_rem
 
-        self.player1_dices = player1_dices
-        self.player2_dices = player2_dices
+        if onlyGet:
+            return player1_dices, player2_dices
+        else:
+            self.player1_dices = player1_dices
+            self.player2_dices = player2_dices
 
     def _add_additional_params_to_board(self, board, player):
         if player == 0:
@@ -230,6 +236,7 @@ class LudoMPLGame(Game):
     def display(bv):
         print(bv)
         board = Board.convert_vector_to_board(bv)
+        print(board)
         print("---------------")
 
         db = [

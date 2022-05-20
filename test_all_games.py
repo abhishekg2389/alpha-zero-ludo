@@ -21,35 +21,6 @@ import unittest
 import Arena
 from MCTS import MCTS
 
-'''
-from tictactoe.TicTacToeGame import TicTacToeGame
-from tictactoe.TicTacToePlayers import *
-from tictactoe.keras.NNet import NNetWrapper as TicTacToeKerasNNet
-
-from tictactoe_3d.TicTacToeGame import TicTacToeGame as TicTacToe3DGame
-from tictactoe_3d.TicTacToePlayers import *
-from tictactoe_3d.keras.NNet import NNetWrapper as TicTacToe3DKerasNNet
-
-from othello.OthelloGame import OthelloGame
-from othello.OthelloPlayers import *
-#from othello.pytorch.NNet import NNetWrapper as OthelloPytorchNNet
-from othello.tensorflow.NNet import NNetWrapper as OthelloTensorflowNNet
-from othello.keras.NNet import NNetWrapper as OthelloKerasNNet
-
-from connect4.Connect4Game import Connect4Game
-from connect4.Connect4Players import *
-from connect4.tensorflow.NNet import NNetWrapper as Connect4TensorflowNNet
-
-from gobang.GobangGame import GobangGame
-from gobang.GobangPlayers import *
-from gobang.keras.NNet import NNetWrapper as GobangKerasNNet
-from gobang.tensorflow.NNet import NNetWrapper as GobangTensorflowNNet
-
-from santorini.SantoriniGame import SantoriniGame
-from santorini.SantoriniPlayers import *
-from santorini.tensorflow.NNet import NNetWrapper as SantoriniTensorflowNNet
-'''
-
 from ludo_mpl.LudoMPLGame import LudoMPLGame
 from ludo_mpl.LudoMPLPlayers import *
 from ludo_mpl.keras_v2.NNet import NNetWrapper as LudoMPLKerasNNet
