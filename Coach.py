@@ -78,10 +78,12 @@ class Coach():
         """
 
         for i in range(1, self.args.numIters + 1):
+            if i < self.args.iter:
+                i = self.args.iter + 1
             # bookkeeping
             log.info(f'Starting Iter #{i} ...')
             # examples of the iteration
-            if not self.skipFirstSelfPlay or i > 1:
+            if not self.skipFirstSelfPlay or i > self.args.iter + 1:
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
 
                 for _ in tqdm(range(self.args.numEps), desc="Self Play"):
@@ -140,7 +142,7 @@ class Coach():
         f.closed
 
     def loadTrainExamples(self):
-        modelFile = os.path.join(self.args.load_folder_file[0], self.args.load_folder_file[1])
+        modelFile = os.path.join(self.args.load_folder_file[0], self.getCheckpointFile(self.args.iter))
         examplesFile = modelFile + ".examples"
         if not os.path.isfile(examplesFile):
             log.warning(f'File "{examplesFile}" with trainExamples not found!')

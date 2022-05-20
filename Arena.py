@@ -55,7 +55,7 @@ class Arena():
                 log.debug(f'valids = {valids}')
                 assert valids[action] > 0
 
-            if self.game.getMoveFromAction:
+            if self.game.getMoveFromAction and verbose:
                 move = self.game.getMoveFromAction(board, curPlayer, action, boardSetAlready=False)
                 print(curPlayer, action, move[2], move)
 
