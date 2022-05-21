@@ -175,4 +175,13 @@ class Board():
                     marker_idx += 1
                     _bv[i, j] -= 1
 
+        assert -2 not in pieces and -1 not in pieces_away_from_home
+
+        _pieces_sort_1 = list(np.argsort(pieces_away_from_home[:4]))
+        _pieces_sort_2 = list(np.argsort(pieces_away_from_home[4:]) + 4)
+        _pieces_sort = _pieces_sort_1 + _pieces_sort_2
+
+        pieces = list(np.array(pieces)[np.array(_pieces_sort)])
+        pieces_away_from_home = list(np.array(pieces_away_from_home)[np.array(_pieces_sort)])
+
         return pieces, pieces_away_from_home

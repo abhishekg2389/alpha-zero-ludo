@@ -19,6 +19,7 @@ g = LudoMPLGame()
 rp = RandomPlayer(g).play
 hp1 = HumanPlayer(g).play
 hp2 = HumanPlayer(g).play
+ap = AggressivePlayer(g).play
 
 # nnet players
 n1 = NNet(g)
@@ -38,6 +39,6 @@ n1p = lambda x: np.argmax(mcts1.getActionProb(x, temp=0))
 
 #    player2 = n2p  # Player 2 is neural network if it's cpu vs cpu.
 
-arena = Arena.Arena(hp1, hp2, g, display=LudoMPLGame.display)
+arena = Arena.Arena(hp1, ap, g, display=LudoMPLGame.display)
 
-print(arena.playGames(2, verbose=True))
+print(arena.playGames(10, verbose=True))

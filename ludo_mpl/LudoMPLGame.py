@@ -33,6 +33,9 @@ class LudoMPLGame(Game):
     def getActionSize(self):
         return 4
 
+    def getBoard(self):
+        return self._base_board
+
     def setGameGivenBoard(self, board):
         self._set_board_from_bvf(board)
         self._set_player_dices_from_board(board)

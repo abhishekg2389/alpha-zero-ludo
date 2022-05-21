@@ -18,13 +18,27 @@ class HumanPlayer():
         self.game = game
 
     def play(self, board):
-        # display(board)
-        a = np.random.randint(self.game.getActionSize())
         valids = self.game.getValidMoves(board, 1, debug=True)
         print(valids)
         while True:
             input_move = int(input())
             if valids[input_move]:
-                a = input_move
-                break
-        return a
+                return input_move
+        assert False
+
+class AggressivePlayer():
+    def __init__(self, game):
+        self.game = game
+
+    def play(self, board):
+        self.game.setGameGivenBoard(board)
+        playing_seq = np.argsort(self.game.getBoard().pieces_away_from_home[:4])
+
+        valids = self.game.getValidMoves(board, 1, debug=True)
+        print(valids)
+
+        for i in range(len(valids)):
+            if valids[playing_seq[i]]:
+                return playing_seq[i]
+
+        assert False
