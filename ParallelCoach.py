@@ -6,7 +6,7 @@ from pickle import Pickler, Unpickler
 from random import shuffle
 
 import numpy as np
-from tqdm import tqdm
+import time
 from multiprocessing import Pool
 
 import ParallelArena
@@ -49,9 +49,11 @@ class ParallelCoach():
             if not self.skipFirstSelfPlay or i > self.args.iter + 1:
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
 
+                strt_time = time.time()
                 with Pool() as pool:
                     future_results = pool.starmap_async(executeEpisode, [(self.game, self.args) for _ in range(self.args.numEps)])
                     results = future_results.get()
+                print("Time taken to run ", self.args.numEps, " episodes : ", time.time() - strt_time)
 
                 for result in results:
                     # save the iteration examples to the history
@@ -79,7 +81,10 @@ class ParallelCoach():
             self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.new.pth.tar')
 
             log.info('PITTING AGAINST PREVIOUS VERSION')
+
+            strt_time = time.time()
             pwins, nwins, draws = ParallelArena.playGames('p_nnp', 'n_nnp', self.args.arenaCompare, self.game)
+            print("Time taken to pit OLD vs NEW players ", time.time() - strt_time)
 
             log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
             if pwins + nwins == 0 or float(nwins) / (pwins + nwins) < self.args.updateThreshold:
