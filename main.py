@@ -9,6 +9,7 @@ from ParallelCoach import ParallelCoach
 from ludo_mpl.LudoMPLGame import LudoMPLGame as Game
 from ludo_mpl.keras_v2.NNet import NNetWrapper as nn
 from utils import *
+import tensorflow as tf
 
 log = logging.getLogger(__name__)
 
@@ -16,18 +17,18 @@ coloredlogs.install(level='DEBUG')  # Change this to DEBUG to see more info.
 
 args = dotdict({
     'numIters': 1000,
-    'numEps': 50,              # Number of complete self-play games to simulate during a new iteration.
+    'numEps': 4,              # Number of complete self-play games to simulate during a new iteration.
     'tempThreshold': 15,        #
     'updateThreshold': 0.6,     # During arena playoff, new neural net will be accepted if threshold or more of games are won.
     'maxlenOfQueue': 200000,    # Number of game examples to train the neural networks.
     'numMCTSSims': 25,          # Number of games moves for MCTS to simulate.
-    'arenaCompare': 20,         # Number of games to play during arena play to determine if new net will be accepted.
+    'arenaCompare': 4,         # Number of games to play during arena play to determine if new net will be accepted.
     'cpuct': 1,
 
     'checkpoint': './temp/',
     'load_model': False,
     'load_folder_file': ('./temp','best.pth.tar'),
-    'numItersForTrainExamplesHistory': 100,
+    'numItersForTrainExamplesHistory': 20,
     'iter': 0
 })
 

@@ -1,5 +1,7 @@
 from multiprocessing import Pool
 import numpy as np
+import subprocess
+import os
 
 from ludo_mpl.LudoMPLPlayers import AggressivePlayer as LudoMPLAP
 from ludo_mpl.LudoMPLPlayers import RandomPlayer as LudoMPLRP
@@ -43,6 +45,63 @@ def playGame(p1, p2, g):
         board, curPlayer = g.getNextState(board, curPlayer, action)
     return curPlayer * g.getGameEnded(board, curPlayer)
 
+
+def playGamesv2(p1, p2, num_games, g):
+    p1Won = 0
+    p2Won = 0
+    draw = 0
+
+    num = int(num_games / 2)
+    subprocesses = []
+    for i in range(num):
+        cmd = '/Users/abhi/alpha-zero-ludo/venv/bin/python ' \
+              '/Users/abhi/alpha-zero-ludo/PlayGame.py ' \
+              '/Users/abhi/alpha-zero-ludo/temp ' + p1 + ' ' + p2 + ' ' + str(i)
+        s = subprocess.Popen(cmd, shell=True)  # executed as a shell script
+        subprocesses.append(s)
+    for s in subprocesses:
+        s.communicate()
+
+    for i in range(num):
+        filename = os.path.join('/Users/abhi/alpha-zero-ludo/temp', "game_" + str(i) + "_")
+        if os.path.exists(filename+str(1)):
+            p1Won += 1
+            os.remove(filename + str(1))
+        elif os.path.exists(filename+str(-1)):
+            p2Won += 1
+            os.remove(filename + str(-1))
+        elif os.path.exists(filename+str(0)):
+            draw += 1
+            os.remove(filename + str(0))
+        else:
+            assert False
+
+    subprocesses = []
+    for i in range(num):
+        cmd = '/Users/abhi/alpha-zero-ludo/venv/bin/python ' \
+              '/Users/abhi/alpha-zero-ludo/PlayGame.py ' \
+              '/Users/abhi/alpha-zero-ludo/temp ' + p2 + ' ' + p1 + ' ' + str(i)
+        s = subprocess.Popen(cmd, shell=True)  # executed as a shell script
+        subprocesses.append(s)
+    for s in subprocesses:
+        s.communicate()
+
+    for i in range(num):
+        filename = os.path.join('/Users/abhi/alpha-zero-ludo/temp', "game_" + str(i) + "_")
+        if os.path.exists(filename + str(1)):
+            p2Won += 1
+            os.remove(filename + str(1))
+        elif os.path.exists(filename + str(-1)):
+            p1Won += 1
+            os.remove(filename + str(-1))
+        elif os.path.exists(filename + str(0)):
+            draw += 1
+            os.remove(filename + str(0))
+        else:
+            assert False
+
+    return p1Won, p2Won, draw
+
 def playGames(p1, p2, num_games, g):
     p1Won = 0
     p2Won = 0
@@ -60,7 +119,7 @@ def playGames(p1, p2, num_games, g):
     for r in results:
         if r == 1:
             p1Won += 1
-        if r == -1:
+        elif r == -1:
             p2Won += 1
         else:
             draw += 1
@@ -76,7 +135,7 @@ def playGames(p1, p2, num_games, g):
     for r in results:
         if r == 1:
             p2Won += 1
-        if r == -1:
+        elif r == -1:
             p1Won += 1
         else:
             draw += 1

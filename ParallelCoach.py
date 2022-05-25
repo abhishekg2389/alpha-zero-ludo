@@ -8,6 +8,7 @@ from random import shuffle
 import numpy as np
 import time
 from multiprocessing import Pool
+import subprocess
 
 import ParallelArena
 from MCTS import MCTS
@@ -50,14 +51,25 @@ class ParallelCoach():
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
 
                 strt_time = time.time()
-                with Pool() as pool:
-                    future_results = pool.starmap_async(executeEpisode, [(self.game, self.args) for _ in range(self.args.numEps)])
-                    results = future_results.get()
+                subprocesses = []
+                for j in range(self.args.numEps):
+                    cmd = '/Users/abhi/alpha-zero-ludo/venv/bin/python /Users/abhi/alpha-zero-ludo/ExecuteEpisode.py ./temp/ temp.pth.tar 15 ' + str(j) + ' 25 1'
+                    s = subprocess.Popen(cmd, shell=True)  # executed as a shell script
+                    subprocesses.append(s)
+                for s in subprocesses:
+                    s.communicate()  ### Now waiting for subprocess to complete
+                # with Pool() as pool:
+                #     future_results = pool.starmap_async(executeEpisode, [(self.game, self.args) for _ in range(self.args.numEps)])
+                #     results = future_results.get()
                 print("Time taken to run ", self.args.numEps, " episodes : ", time.time() - strt_time)
 
-                for result in results:
+                for j in range(self.args.numEps):
                     # save the iteration examples to the history
-                    iterationTrainExamples += result
+                    episodeFolder = "./temp/"
+                    episodeFile = os.path.join(episodeFolder, "episode-" + str(j) + ".pkl")
+                    with open(episodeFile, "rb") as f:
+                        iterationTrainExamples += Unpickler(f).load()
+                    # iterationTrainExamples += result
 
                 self.trainExamplesHistory.append(iterationTrainExamples)
 
@@ -83,7 +95,7 @@ class ParallelCoach():
             log.info('PITTING AGAINST PREVIOUS VERSION')
 
             strt_time = time.time()
-            pwins, nwins, draws = ParallelArena.playGames('p_nnp', 'n_nnp', self.args.arenaCompare, self.game)
+            pwins, nwins, draws = ParallelArena.playGamesv2('p_nnp', 'n_nnp', self.args.arenaCompare, self.game)
             print("Time taken to pit OLD vs NEW players ", time.time() - strt_time)
 
             log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))

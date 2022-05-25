@@ -104,7 +104,6 @@ class Board():
         elif player_piece_idx_pos_count == 0:
             assert False
         else:
-            other_player_piece_idx = -1
             if player == 1:
                 for i in [4, 5, 6, 7]:
                     if self.pieces[i] == player_piece_idx_pos:
@@ -114,13 +113,6 @@ class Board():
                     if self.pieces[i] == player_piece_idx_pos:
                         return i
         return -1
-
-    def _count_pieces_on_pos(self, pos):
-        pieces_count = 0
-        for i in [0, 1, 2, 3, 4, 5, 6, 7]:
-            if self.pieces[i] == pos:
-                pieces_count += 1
-        return pieces_count
 
     @property
     def convert_board_to_vector(self):

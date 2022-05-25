@@ -42,3 +42,33 @@ class AggressivePlayer():
                 return playing_seq[i]
 
         assert False
+
+class HeuristicPlayer():
+    def __init__(self, game, p):
+        self.game = game
+        self.lower_p = p
+
+    def play(self, board):
+        self.game.setGameGivenBoard(board)
+        playing_seq = np.argsort(self.game.getBoard().pieces_away_from_home[:4])
+
+        valids = self.game.getValidMoves(board, 1, debug=False)
+
+        for i in range(len(valids)):
+            if valids[playing_seq[i]]:
+
+                return playing_seq[i]
+
+        safe_pos = [8, 13, 21, 26, 34, 39, 47]
+
+        self.game.setGameGivenBoard(board)
+        playing_seq = np.argsort(self.game.getBoard().pieces_away_from_home[:4])
+
+        valids = self.game.getValidMoves(board, 1, debug=True)
+        print(valids)
+
+        for i in range(len(valids)):
+            if valids[playing_seq[i]]:
+                return playing_seq[i]
+
+        assert False
